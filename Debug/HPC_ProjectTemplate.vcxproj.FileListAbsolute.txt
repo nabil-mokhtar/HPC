@@ -1,0 +1,2 @@
+C:\Users\Nabil\Documents\Hpc\HPC_ProjectTemplate\HPC_ProjectTemplate\Debug\HPC_ProjectTemplate.vcxproj.AssemblyReference.cache
+C:\Users\Nabil\Documents\Hpc\HPC_ProjectTemplate\HPC_ProjectTemplate\Debug\HPC_ProjectTemplate.vcxproj.SuggestedBindingRedirects.cache
