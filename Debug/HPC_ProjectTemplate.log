@@ -1,9 +1,9 @@
 ﻿  Source.cpp
-C:\Users\Nabil\Documents\Hpc\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(91,9): warning C4101: 'j': unreferenced local variable
-C:\Users\Nabil\Documents\Hpc\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(91,6): warning C4101: 'i': unreferenced local variable
-C:\Users\Nabil\Documents\Hpc\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(181,59): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
-C:\Users\Nabil\Documents\Hpc\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(140,6): warning C4101: 'i': unreferenced local variable
-C:\Users\Nabil\Documents\Hpc\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(112): warning C4101: 'i': unreferenced local variable
+C:\Users\Nabil\Documents\Hpc\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(92,9): warning C4101: 'j': unreferenced local variable
+C:\Users\Nabil\Documents\Hpc\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(92,6): warning C4101: 'i': unreferenced local variable
+C:\Users\Nabil\Documents\Hpc\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(207,59): warning C4244: '+=': conversion from 'double' to 'int', possible loss of data
+C:\Users\Nabil\Documents\Hpc\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(154,6): warning C4101: 'i': unreferenced local variable
+C:\Users\Nabil\Documents\Hpc\HPC_ProjectTemplate\HPC_ProjectTemplate\Source.cpp(113): warning C4101: 'i': unreferenced local variable
   .NETFramework,Version=v4.7.2.AssemblyAttributes.cpp
   Generating Code...
   Source.obj : MSIL module encountered; incremental linking is disabled for MSIL; performing full link

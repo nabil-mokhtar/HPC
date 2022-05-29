@@ -129,7 +129,7 @@ int main()
 	int levels = calc_l(filter_size);
 
 	// new array size 
-	MPI_Init(NULL,NULL);
+
 	MPI_Init(NULL, NULL);
 	int world_size;
 	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -138,53 +138,55 @@ int main()
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 
-	int local_height = ImageHeight / world_size;
-	int local_size = local_height * ImageWidth;
+	int row = ImageHeight / world_size;
+	int local_size = row * ImageWidth;
 	int* local_image = new int[local_size];
 	int* finall = new int[ImageWidth * ImageHeight];
+	int size = (row + 2 * levels) * (ImageWidth + 2 * levels);
+	int* partial_image_p = new int[size] {0};
+
+
 
 	MPI_Scatter(imageData, local_size, MPI_INT, local_image, local_size, MPI_INT, 0, MPI_COMM_WORLD);
-
-	int p_hight = ImageHeight + 2 * levels;
-	int p_width = ImageWidth + 2 * levels;
-	int p_size = p_hight * p_width;
-
-	int* pad_image = new int[p_size] {0};
 
 
 
 	int i; 
 	// create padded image
-	for (int i = levels; i < p_hight - levels; i++)
+	for (int i = levels; i < row + levels; i++)
 	{
-		for (int j = levels; j < p_width - levels; j++)
+		for (int j = levels; j < ImageWidth + levels; j++)
 		{
-			pad_image[p_width * i + j] = imageData[ImageWidth * (i - levels) + (j - levels)];
+			partial_image_p[ImageWidth * i + j] = local_image[ImageWidth * (i - levels) + (j - levels)];
 		}
 	}
 
+
+
 	//firstprivate(filter)
-#pragma omp parallel shared(pad_image,imageData,levels,filter_size) private(i)
+#pragma omp parallel shared(imageData,levels,filter_size) private(i)
 	{
 	int* filter = new int[filter_size];
 	// apply kernal
 #pragma omp for
-	for (int i = levels; i < p_hight - levels; i++)
+	for (int i = levels; i < row + levels; i++)
 	{
 
-		for (int j = levels; j < p_width - levels; j++)
+		for (int j = levels; j < ImageWidth + levels; j++)
 		{
 
 			int counter = 0;
+
+			// loop for filter 
 			for (int h = i - levels; h <= i + levels; h++)
 			{
 				for (int w = j - levels; w <= j + levels; w++)
 				{
-					filter[counter] = pad_image[p_width * h + w];
+					filter[counter] = partial_image_p[ImageWidth * h + w];
 					counter++;
 				}
 			}
-			imageData[ImageWidth * (i - levels) + (j - levels)] = find_median(filter, filter_size);
+			local_image[ImageWidth * i - levels + j - levels] = find_median(filter, filter_size);
 
 		}
 
@@ -194,16 +196,19 @@ int main()
 
 	MPI_Gather(local_image, local_size, MPI_INT, finall, local_size, MPI_INT, 0, MPI_COMM_WORLD);
 
+	if (rank == 0) {
+		imageData = finall;
+		createImage(imageData, ImageWidth, ImageHeight, 0);
 
-	createImage(imageData, ImageWidth, ImageHeight, 0);
+	}
+	
 	stop_s = clock();
-
+	MPI_Finalize();
 	TotalTime += (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000;
 	cout << "time: " << TotalTime << endl;
 	system("pause");
 
 	free(imageData);
-	free(pad_image);
 	
 	return 0;
 
