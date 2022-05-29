@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include<string.h>
+#include<mpi.h>
 
 //#include<bits/stdc++.h>
 #include<msclr\marshal_cppstd.h>
@@ -128,6 +129,21 @@ int main()
 	int levels = calc_l(filter_size);
 
 	// new array size 
+	MPI_Init(NULL,NULL);
+	MPI_Init(NULL, NULL);
+	int world_size;
+	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+
+	int local_height = ImageHeight / world_size;
+	int local_size = local_height * ImageWidth;
+	int* local_image = new int[local_size];
+	int* finall = new int[ImageWidth * ImageHeight];
+
+	MPI_Scatter(imageData, local_size, MPI_INT, local_image, local_size, MPI_INT, 0, MPI_COMM_WORLD);
 
 	int p_hight = ImageHeight + 2 * levels;
 	int p_width = ImageWidth + 2 * levels;
@@ -175,6 +191,10 @@ int main()
 	}
 
 	}
+
+	MPI_Gather(local_image, local_size, MPI_INT, finall, local_size, MPI_INT, 0, MPI_COMM_WORLD);
+
+
 	createImage(imageData, ImageWidth, ImageHeight, 0);
 	stop_s = clock();
 
