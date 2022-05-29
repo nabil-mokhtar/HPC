@@ -1,12 +1,11 @@
-#include <omp.h>
 #include <iostream>
 #include <math.h>
 #include <stdlib.h>
 #include<string.h>
-
 //#include<bits/stdc++.h>
 #include<msclr\marshal_cppstd.h>
 #include <ctime>// include this header 
+#include<mpi.h>
 #pragma once
 
 #using <mscorlib.dll>
@@ -102,11 +101,14 @@ int find_median(int* a, int size) {
 
 	}
 
-	//cout << arr[size / 2]<<endl;
 
-	return a[size / 2];
+
+	return a[(size / 2)];
 
 }
+
+
+
 
 
 int main()
@@ -117,79 +119,103 @@ int main()
 
 	System::String^ imagePath;
 	std::string img;
-	img = "..//Data//Input//NoiseImage//N_N_Salt_Pepper.PNG";
+	img = "..//Data//Input//NoiseImage//5N_N_Salt_Pepper.PNG";
 
 	imagePath = marshal_as<System::String^>(img);
 	int* imageData = inputImage(&ImageWidth, &ImageHeight, imagePath);
 
 
-	start_s = clock();
+
+
 	int filter_size = 9;
 	int levels = calc_l(filter_size);
 
-	// new array size 
-
-	int p_hight = ImageHeight + 2 * levels;
-	int p_width = ImageWidth + 2 * levels;
-	int p_size = p_hight * p_width;
-
-	int* pad_image = new int[p_size] {0};
+	int* filter = new int[filter_size];
 
 
+	start_s = clock();
+	// mpi init
+	MPI_Init(NULL, NULL);
+	int world_size;
+	MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+	int world_rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+	int partial_size = ImageHeight * ImageWidth / world_size;
 
-	int i; 
-	// create padded image
-	for (int i = levels; i < p_hight - levels; i++)
+	cout << "world size : " << world_size << " partial : " << partial_size << endl;
+	int start = partial_size * world_rank;   //foreach process
+	int end = start + partial_size - 1;      //foreach process
+	int* partial_image = new int[partial_size];
+
+	int row = (ImageHeight / world_size);
+	int size = (row + 2 * levels) * (ImageWidth + 2 * levels);
+	int* partial_image_p = new int[size] {0};
+
+
+
+	MPI_Scatter(imageData, partial_size, MPI_INT, partial_image, partial_size, MPI_INT, 0, MPI_COMM_WORLD);
+
+
+
+	// add pading to image
+	for (int i = levels; i < row + levels; i++)
 	{
-		for (int j = levels; j < p_width - levels; j++)
+		for (int j = levels; j < ImageWidth + levels; j++)
 		{
-			pad_image[p_width * i + j] = imageData[ImageWidth * (i - levels) + (j - levels)];
+			partial_image_p[ImageWidth * i + j] = partial_image[ImageWidth * (i - levels) + (j - levels)];
 		}
 	}
 
-	//firstprivate(filter)
-#pragma omp parallel shared(pad_image,imageData,levels,filter_size) private(i)
-	{
-	int* filter = new int[filter_size];
-	// apply kernal
-#pragma omp for
-	for (int i = levels; i < p_hight - levels; i++)
+
+	// filter
+	for (int i = levels; i < row + levels; i++)
 	{
 
-		for (int j = levels; j < p_width - levels; j++)
+		for (int j = levels; j < ImageWidth + levels; j++)
 		{
 
 			int counter = 0;
+
+			// loop for filter 
 			for (int h = i - levels; h <= i + levels; h++)
 			{
 				for (int w = j - levels; w <= j + levels; w++)
 				{
-					filter[counter] = pad_image[p_width * h + w];
+					filter[counter] = partial_image_p[ImageWidth * h + w];
 					counter++;
 				}
 			}
-			imageData[ImageWidth * (i - levels) + (j - levels)] = find_median(filter, filter_size);
+			partial_image[ImageWidth * i - levels + j - levels] = find_median(filter, filter_size);
 
 		}
 
 	}
 
-	}
-	createImage(imageData, ImageWidth, ImageHeight, 0);
+
+	MPI_Gather(partial_image, partial_size, MPI_INT, imageData, partial_size, MPI_INT, 0, MPI_COMM_WORLD);
+
+
+
+	MPI_Finalize();
 	stop_s = clock();
+
+	if (world_rank == 0) {
+		createImage(imageData, ImageWidth, ImageHeight, 0);
+	}
+
+
+
+
 
 	TotalTime += (stop_s - start_s) / double(CLOCKS_PER_SEC) * 1000;
 	cout << "time: " << TotalTime << endl;
 	system("pause");
 
 	free(imageData);
-	free(pad_image);
-	
+	delete[] filter;
 	return 0;
 
 }
-
-
 
 
 
